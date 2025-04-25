@@ -49,9 +49,3 @@ jobs:
         run: |
           CHART_VERSION="${{ steps.chart-version.outputs.version }}"
           helm push vscode-${CHART_VERSION}.tgz oci://ghcr.io/${{ github.repository }}/charts
-          
-      - name: List published charts
-        run: |
-          helm registry login ghcr.io/${{ github.repository }} -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
-          echo "Listing available charts:"
-          helm search repo ghcr.io/${{ github.repository }}/charts --devel
