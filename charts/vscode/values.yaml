@@ -2,13 +2,9 @@
 replicaCount: 1
 
 image:
-  repository: ghcr.io/musaprg/vscode-docker
+  repository: ghcr.io/homemofu/vscode-docker
   pullPolicy: IfNotPresent
   tag: "latest"
-
-# VSCode version specification
-vscode:
-  version: "1.85.1" # Specify the VSCode version to use
 
 imagePullSecrets: []
 nameOverride: ""
