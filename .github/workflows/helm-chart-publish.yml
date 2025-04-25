@@ -1,0 +1,57 @@
+name: Publish Helm Chart
+
+on:
+  push:
+    # TODO: Manage helm chart release based on another tag
+    branches:
+      - main
+    paths:
+      - 'charts/**'
+  workflow_dispatch:
+
+jobs:
+  publish-helm-chart:
+    name: Build and Publish Helm Chart
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: 'latest'
+
+      - name: Log in to GitHub Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Get chart version
+        id: chart-version
+        run: |
+          CHART_VERSION=$(grep 'version:' charts/vscode/Chart.yaml | awk '{print $2}' | tr -d '"')
+          echo "version=$CHART_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Package Helm chart
+        run: |
+          helm package charts/vscode/
+
+      - name: Push Helm chart to GHCR
+        run: |
+          CHART_VERSION="${{ steps.chart-version.outputs.version }}"
+          helm push vscode-${CHART_VERSION}.tgz oci://ghcr.io/${{ github.repository }}/charts
+          
+      - name: List published charts
+        run: |
+          helm registry login ghcr.io/${{ github.repository }} -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
+          echo "Listing available charts:"
+          helm search repo ghcr.io/${{ github.repository }}/charts --devel
